@@ -10,7 +10,6 @@ def change_time(env_now):
     fill_length = len(str(SIM_TIME * 24))
     return str(int(env_now)).zfill(fill_length)
 
-
 class Inventory:
     def __init__(self, env, item_id, holding_cost):
         self.env = env
@@ -18,6 +17,10 @@ class Inventory:
         self.on_hand_inventory = INIT_LEVEL  # capacity=infinity\
         self.in_transition_inventory = 0
         self.capacity_limit = INVEN_LEVEL_MAX
+
+        self.daily_inven_report = [f"Day {self.env.now//24}", I[self.item_id]['NAME'],
+                                   I[self.item_id]['TYPE'], self.on_hand_inventory, 0, 0, 0]  # inventory report
+       
         # self.unit_holding_cost = holding_cost/24  # $/unit*hour
         # self.holding_cost_last_updated = 0.0
         # self.daily_inven_cost = 0
@@ -36,12 +39,22 @@ class Inventory:
     #         f"{self.env.now}: {I[self.item_id]['NAME']}\'s Daily holding cost updated              : {holding_cost}")
     #     self.daily_inven_cost += holding_cost
 
-    def update_demand_quantity(self, demand_qty):
+    def update_demand_quantity(self, demand_qty, daily_events):
+       
         DEMAND_HISTORY.append(demand_qty)
-        print(
-            f"{self.env.now-24}: Customer order of {I[0]['NAME']}                                : {I[0]['DEMAND_QUANTITY']} units ")
+        daily_events.append(
+            f"{change_time(self.env.now)}: Customer order of {I[0]['NAME']}                                 : {I[0]['DEMAND_QUANTITY']} units ")
 
     def update_inven_level(self, quantity_of_change, inven_type, daily_events):
+        
+        if I[self.item_id]["TYPE"] == "Material":
+            if quantity_of_change < 0 and inven_type == "ON_HAND":
+                self._update_report(quantity_of_change)
+
+            elif inven_type == "IN_TRANSIT" and quantity_of_change > 0:
+                self._update_report(quantity_of_change)
+        else:
+            self._update_report(quantity_of_change)
 
         if inven_type == "ON_HAND":  # update on-hand inventory
             self.on_hand_inventory += quantity_of_change
@@ -153,10 +166,10 @@ class Procurement:
 
                 # Record in_transition_inventory
                 daily_events.append(
-                    f"{self.env.now}: MATERIAL 1\'s In_transition_inventory                  : {inventory.in_transition_inventory} units ")
+                    f"{change_time(self.env.now)}: {I[self.item_id]['NAME']}\'s In_transition_inventory                    : {inventory.in_transition_inventory} units ")
                 # Record inventory
                 daily_events.append(
-                    f"{self.env.now}: MATERIAL 1\'s Real_Inventory                          : {inventory.toal_inventory} units  ")
+                    f"{change_time(self.env.now)}: {I[self.item_id]['NAME']}\'s Total_Inventory                            : {inventory.in_transition_inventory+inventory.on_hand_inventory} units  ")
             # daily_events.append(
             #     f"{self.env.now}: {I[self.item_id]['NAME']}\'s daily procurement cost                  : {self.daily_procurement_cost}")  # Change timeout function to cycle 24 hours
             yield self.env.timeout(I[self.item_id]["MANU_ORDER_CYCLE"] *
@@ -229,8 +242,12 @@ class Production:
                 yield self.env.timeout(processing_time)
                 daily_events.append(
                     "===============Result Phase================")
-                daily_events.append(
-                    f"{change_time(self.env.now)}: {self.output['NAME']} has been produced                               : 1 units")
+                if self.output['NAME'] == "PRODUCT":
+                    daily_events.append(
+                        f"{change_time(self.env.now)}: {self.output['NAME']} has been produced                                 : 1 units")
+                else:
+                    daily_events.append(
+                        f"{change_time(self.env.now)}: {self.output['NAME']} has been produced                                   : 1 units")
                 # Update the inventory level for the output item
                 self.output_inventory.update_inven_level(
                     1, "ON_HAND", daily_events)
@@ -269,17 +286,18 @@ class Sales:
                 product_inventory.on_hand_inventory - demand_size)
             if product_inventory.on_hand_inventory > 0:  # Delivering the remaining products to the customer
                 daily_events.append(
-                    f"{change_time(self.env.now)}: PRODUCT have been delivered to the customer                                : {product_inventory.on_hand_inventory} units ")
+                    f"{change_time(self.env.now)}: PRODUCT have been delivered to the customer                                 : {product_inventory.on_hand_inventory} units ")
                 # yield self.env.timeout(DELIVERY_TIME)
                 product_inventory.update_inven_level(
-                    -product_inventory.on_hand_inventory, daily_events)
-                self._cal_selling_cost(
-                    product_inventory.on_hand_inventory, daily_events)
-            self._cal_penalty_cost(num_shortages, daily_events)
+                    -product_inventory.on_hand_inventory, 'ON_HAND', daily_events)
+                # self._cal_selling_cost(
+                # product_inventory.on_hand_inventory, daily_events)
+            # self._cal_penalty_cost(num_shortages, daily_events)
+
+            # daily_events.append(
+            #   f"[Daily penalty cost] {self.daily_penalty_cost}")
             daily_events.append(
-                f"[Daily penalty cost] {self.daily_penalty_cost}")
-            daily_events.append(
-                f"{self.env.now}: Unable to deliver {num_shortages} units to the customer due to product shortage")
+                f"{change_time(self.env.now)}: Unable to deliver {num_shortages} units to the customer due to product shortage")
             # Check again after 24 hours (1 day)
             # yield self.env.timeout(24)
         # Delivering products to the customer
@@ -287,8 +305,8 @@ class Sales:
             product_inventory.update_inven_level(
                 -demand_size, 'ON_HAND', daily_events)
             daily_events.append(
-                f"{self.env.now}: PRODUCT have been delivered to the customer       : {demand_size} units  ")
-            self._cal_selling_cost(demand_size, daily_events)
+                f"{change_time(self.env.now)}: PRODUCT have been delivered to the customer               : {demand_size} units  ")
+            # self._cal_selling_cost(demand_size, daily_events)
 
     def receive_demands(self, demand_qty, product_inventory, daily_events):
         product_inventory.update_demand_quantity(demand_qty, daily_events)
