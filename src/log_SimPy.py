@@ -1,8 +1,8 @@
 # Log simulation events
 DAILY_EVENTS = []
-
-# Log daily repots: Inventory level for each item; daily change for each item; Remaining demand (demand - product level)
+# Log daily repots
 DAILY_REPORTS = []
+STATE_DICT = []
 COST_LOG = []
 DEMAND_LOG = []
 DAILY_COST_REPORT = {
@@ -12,4 +12,3 @@ DAILY_COST_REPORT = {
     'Order cost': 0,
     'Shortage cost': 0
 }
-ORDER_HISTORY = []
