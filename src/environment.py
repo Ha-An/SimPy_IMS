@@ -3,7 +3,6 @@ import numpy as np
 from config_SimPy import *  # Assuming this imports necessary configurations
 from log_SimPy import *  # Assuming this imports necessary logging functionalities
 
-
 class Inventory:
     def __init__(self, env, item_id, holding_cost):
         # Initialize inventory object
@@ -146,7 +145,7 @@ class Procurement:
                 f"==============={I[self.item_id]['NAME']}\'s Inventory ===============")
 
             # Set the order size based on LOT_SIZE_ORDER and reorder level
-            if SSPOLICY:
+            if DRL:
                 if inventory.on_hand_inventory <= SQPAIR['Reorder']:
                     order_size = SQPAIR['Order']
                 else:
@@ -197,6 +196,7 @@ class Production:
         """
         Simulate the production process.
         """
+        yield self.env.timeout(0)
         while True:
             # Check if there's a shortage of input materials or WIPs
             shortage_check = False
@@ -330,7 +330,7 @@ class Customer:
         """
         Place orders for products to the sales process.
         """
-        yield self.env.timeout(self.env.now)  # Wait for the next order cycle
+        yield self.env.timeout(0)  # Wait for the next order cycle
         while True:
             # Generate a random demand quantity
             I[0]["DEMAND_QUANTITY"] = DEMAND_QTY_FUNC(scenario)
@@ -432,13 +432,23 @@ def create_env(I, P, daily_events):
 
 # Event processes for SimPy simulation
 def simpy_event_processes(simpy_env, inventoryList, procurementList, productionList, sales, customer, supplierList, daily_events, I, scenario):
+    simpy_env.process(customer.order_product(
+        sales, inventoryList[I[0]["ID"]], daily_events, scenario["DEMAND"]))
     for production in productionList:
         simpy_env.process(production.process_items(daily_events))
     for i in range(len(supplierList)):
         simpy_env.process(procurementList[i].order_material(
             supplierList[i], inventoryList[supplierList[i].item_id], daily_events, scenario["LEADTIME"]))
-    simpy_env.process(customer.order_product(
-        sales, inventoryList[I[0]["ID"]], daily_events, scenario["DEMAND"]))
+    simpy_env.process(record_inventory(simpy_env, inventoryList))
+    
+def record_inventory(env, inventoryList):
+    record_graph(I)
+    while(True):
+        for inven in inventoryList:
+            GRAPH_LOG[I[inven.item_id]['NAME']].append(inven.on_hand_inventory)
+            if I[inven.item_id]['TYPE'] == 'Material':
+                GRAPH_LOG[f'{I[inven.item_id]['NAME']}_in_transition_inventory'].append(inven.in_transition_inventory)
+        yield env.timeout(1)
 
 
 def update_daily_report(inventoryList):

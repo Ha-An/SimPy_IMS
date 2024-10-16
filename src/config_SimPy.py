@@ -1,6 +1,7 @@
 import random  # For random number generation
 import os
 import numpy as np
+import shutil
 
 #### Items #####################################################################
 # ID: Index of the element in the dictionary
@@ -45,7 +46,7 @@ I = {0: {"ID": 0, "TYPE": "Product",      "NAME": "PRODUCT",
          "SHORTAGE_COST_PRO": 50},
      1: {"ID": 1, "TYPE": "Material", "NAME": "MATERIAL 1",
          "MANU_ORDER_CYCLE": 1,
-         "INIT_LEVEL": 2,
+         "INIT_LEVEL":2,
          "SUP_LEAD_TIME": 2,  # SUP_LEAD_TIME must be an integer
          "HOLD_COST": 1,
          "PURCHASE_COST": 2,
@@ -168,21 +169,14 @@ P = {0: {"ID": 0, "PRODUCTION_RATE": 2, "INPUT_TYPE_LIST": [I[1], I[2]], "QNTY_F
 DAILY_CHANGE = 0  # 0: False / 1: True
 INTRANSIT = 1  # 0: False / 1: True
 
-
 # State space
 # if this is not 0, the length of state space of demand quantity is not identical to INVEN_LEVEL_MAX
 INVEN_LEVEL_MIN = 0
 INVEN_LEVEL_MAX = 20  # Capacity limit of the inventory [units]
-# DEMAND_QTY_MIN = 14
-# DEMAND_QTY_MAX = 14
 
 # Simulation
 SIM_TIME = 14  # 200 [days] per episode
-'''
-# Distribution types
-DEMAND_DIST_TYPE = "UNIFORM"  # GAUSSIAN, UNIFORM
-LEAD_DIST_TYPE = "UNIFORM"  # GAUSSIAN, UNIFORM
-'''
+
 # Count for intransit inventory
 MAT_COUNT = 0
 for id in I.keys():
@@ -191,12 +185,12 @@ for id in I.keys():
 
 # Scenario about Demand and leadtime
 DEMAND_SCENARIO = {"Dist_Type": "UNIFORM",
-                   "min": 10,
-                   "max": 11}
+                   "min": 13,
+                   "max": 13}
 
 LEADTIME_SCENARIO = {"Dist_Type": "UNIFORM",
                      "min": 1,
-                     "max": 2}
+                     "max": 1}
 # Example of Gaussian case
 """
 DEMAND_SCENARIO = {"Dist_Type": "GAUSSIAN",
@@ -219,25 +213,12 @@ def DEFINE_FOLDER(folder_name):
 
 
 def save_path(path):
-    import shutil
-
     if os.path.exists(path):
         shutil.rmtree(path)
 
     # Create a new folder
     os.makedirs(path)
     return path
-
-
-# Uncertainty factors
-
-'''
-def DEMAND_QTY_FUNC():
-    return random.randint(DEMAND_QTY_MIN, DEMAND_QTY_MAX)
-def SUP_LEAD_TIME_FUNC():
-    # SUP_LEAD_TIME must be an integer and less than CUST_ORDER_CYCLE(7)
-    return random.randint(1, 1)
-'''
 
 
 def DEMAND_QTY_FUNC(scenario):
@@ -279,18 +260,15 @@ def SUP_LEAD_TIME_FUNC(lead_time_dict):
 ORDER_QTY = 2
 REORDER_LEVEL = 0
 '''
-# Ordering rules -> If not used, the list should be left empty: []
-SSPOLICY = True  # When using Sspolicy
+
+DRL = True  # When using Sspolicy
 SQPAIR = {'Reorder': 0,
-          'Order': 0}
-# ORDER_QTY = [1] # AP1 when normal
-# ORDER_QTY = [1, 1, 1, 1, 1]  # AP3 when normal
-# ORDER_QTY = 2 # S_Level when SsPolicy
+          'Order': 2}
 
 # Print logs
 PRINT_SIM_EVENTS = True
-PRINT_SIM_REPORT = False
-PRINT_DAILY_COST = False
+PRINT_SIM_REPORT = True
+PRINT_DAILY_COST = True
 
 # Cost model
 # If False, the total cost is calculated based on the inventory level for every 24 hours.

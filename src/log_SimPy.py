@@ -16,3 +16,11 @@ DAILY_COST = {
     'Order cost': 0,
     'Shortage cost': 0
 }
+GRAPH_LOG = {}
+
+def record_graph(item):
+    for info in item.keys():
+        GRAPH_LOG[item[info]['NAME']] = []
+        if item[info]['TYPE'] == 'Material':
+            GRAPH_LOG[f'{item[info]['NAME']}_in_transition_inventory'] = []
+    print(GRAPH_LOG)

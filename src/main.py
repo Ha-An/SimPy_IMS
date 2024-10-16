@@ -3,7 +3,7 @@ from log_SimPy import *
 import environment as env
 import pandas as pd
 import Visualization
-
+import matplotlib.pyplot as plt
 # Define the scenario
 scenario = {"DEMAND": DEMAND_SCENARIO, "LEADTIME": LEADTIME_SCENARIO}
 
@@ -33,12 +33,8 @@ for x in range(SIM_TIME):
     daily_events.clear()
 
     env.update_daily_report(inventoryList)
-    # Print the daily report
-    if PRINT_SIM_REPORT:
-        for id in range(len(inventoryList)):
-            print(LOG_DAILY_REPORTS[x][id])
-
     env.Cost.update_cost_log(inventoryList)
+
     # Print the daily cost
     if PRINT_DAILY_COST:
         for key in DAILY_COST.keys():
@@ -46,3 +42,8 @@ for x in range(SIM_TIME):
         print(f"Daily Total Cost: {LOG_COST[-1]}")
     print(f"Cumulative Total Cost: {sum(LOG_COST)}")
     env.Cost.clear_cost()
+
+for graph in GRAPH_LOG.keys():
+    plt.plot(GRAPH_LOG[graph], label = f'{graph}')
+plt.legend()
+plt.show()
