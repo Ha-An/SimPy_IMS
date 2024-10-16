@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from log_SimPy import *
 from config_SimPy import *
 
 
@@ -33,3 +34,8 @@ def visualization(export_Daily_Report):
     plt.savefig("Graph")
     plt.clf()
 
+def viz_sq():
+    for graph in GRAPH_LOG.keys():
+        plt.plot(GRAPH_LOG[graph], label = f'{graph}')
+    plt.legend()
+    plt.show()
