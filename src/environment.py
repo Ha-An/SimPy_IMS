@@ -2,6 +2,7 @@ import simpy
 import numpy as np
 from config_SimPy import *  # Assuming this imports necessary configurations
 from log_SimPy import *  # Assuming this imports necessary logging functionalities
+from Visualization import *
 
 
 class Inventory:
@@ -35,17 +36,6 @@ class Inventory:
         """
         Update the inventory level based on the quantity of change and log the event.
         """
-        '''
-        if I[self.item_id]["TYPE"] == "Material":
-            if quantity_of_change < 0 and inven_type == "ON_HAND":
-                self._update_report(quantity_of_change)
-            elif inven_type == "IN_TRANSIT" and quantity_of_change > 0:
-                self.change_qty = quantity_of_change
-                self._update_report(quantity_of_change)
-        else:
-            self._update_report(quantity_of_change)
-        '''
-
         if inven_type == "ON_HAND":
             # Update on-hand inventory
             Cost.cal_cost(self, "Holding cost")
@@ -56,11 +46,6 @@ class Inventory:
                 daily_events.append(
                     f"{present_daytime(self.env.now)}: Due to the upper limit of the inventory, {I[self.item_id]['NAME']} is wasted: {self.on_hand_inventory - self.capacity_limit}")
                 self.on_hand_inventory = self.capacity_limit
-            # Check if inventory goes negative
-            if self.on_hand_inventory < 0:
-                daily_events.append(
-                    f"{present_daytime(self.env.now)}: Shortage of {I[self.item_id]['NAME']}: {self.capacity_limit - self.on_hand_inventory}")
-                self.on_hand_inventory = 0
 
             self.holding_cost_last_updated = self.env.now
 
@@ -146,7 +131,7 @@ class Procurement:
                 f"==============={I[self.item_id]['NAME']}\'s Inventory ===============")
 
             # Set the order size based on LOT_SIZE_ORDER and reorder level
-            if SSPOLICY:
+            if DRL:
                 if inventory.on_hand_inventory <= SQPAIR['Reorder']:
                     order_size = SQPAIR['Order']
                 else:
@@ -203,6 +188,8 @@ class Production:
             for inven, input_qnty in zip(self.input_inventories, self.qnty_for_input_item):
                 if inven.on_hand_inventory < input_qnty:
                     shortage_check = True
+                    # early stop
+                    break
 
             # Check if the output inventory is full
             inven_upper_limit_check = False
@@ -276,36 +263,31 @@ class Sales:
         yield self.env.timeout(I[self.item_id]["DUE_DATE"] * 24-TIME_CORRECTION/2)  # Time Correction
         product_inventory.holding_cost_last_updated -= TIME_CORRECTION / \
             2  # Cost Update Time Correction
-        # Check if products are available for delivery
-        if product_inventory.on_hand_inventory < demand_size:
-            # Calculate the shortage
-            self.num_shortages = abs(
-                product_inventory.on_hand_inventory - demand_size)
-            # If there are some products available, deliver them first
-            if product_inventory.on_hand_inventory > 0:
-                self.delivery_item = product_inventory.on_hand_inventory
-                daily_events.append(
-                    f"{self.env.now+TIME_CORRECTION/2}: PRODUCT have been delivered to the customer       : {product_inventory.on_hand_inventory} units ")
-                # Update inventory
-                product_inventory.update_inven_level(
-                    -product_inventory.on_hand_inventory, 'ON_HAND', daily_events)
+        # Calculate the shortage
+        self.num_shortages = max(
+            0, demand_size - product_inventory.on_hand_inventory)
+        # Calculate the delivery item
+        self.delivery_item = min(
+            demand_size, product_inventory.on_hand_inventory)
+        daily_events.append(
+            f"DEMAND: {demand_size}, DELIVERY:{self.delivery_item}")
+        # If there are some products available, deliver them first
+        if self.delivery_item > 0:
+            daily_events.append(
+                f"{self.env.now+TIME_CORRECTION/2}: PRODUCT have been delivered to the customer       : {self.delivery_item} units ")
+            # Update inventory
+            product_inventory.update_inven_level(
+                -self.delivery_item, 'ON_HAND', daily_events)
+            Cost.cal_cost(self, "Delivery cost")
 
-            # Calculate and log shortage cost
+        # Calculate and log shortage cost
+        if self.num_shortages > 0:
             Cost.cal_cost(self, "Shortage cost")
             daily_events.append(
                 f"{present_daytime(self.env.now+TIME_CORRECTION/2)}: Unable to deliver {self.num_shortages} units to the customer due to product shortage")
 
-        else:
-            # Deliver products to the customer
-            self.delivery_item = demand_size
-            product_inventory.update_inven_level(
-                -demand_size, 'ON_HAND', daily_events)
-            daily_events.append(
-                f"{present_daytime(self.env.now)}: PRODUCT have been delivered to the customer : {demand_size} units ")
-
         # Cost Update Time Correction
         product_inventory.holding_cost_last_updated += TIME_CORRECTION
-        Cost.cal_cost(self, "Delivery cost")
         yield self.env.timeout(TIME_CORRECTION/2)  # Time Correction
 
     def receive_demands(self, demand_qty, product_inventory, daily_events):
@@ -330,13 +312,14 @@ class Customer:
         """
         Place orders for products to the sales process.
         """
-        yield self.env.timeout(self.env.now)  # Wait for the next order cycle
+        # yield self.env.timeout(self.env.now)  # Wait for the next order cycle
+        yield self.env.timeout(0)  # Wait for the next order cycle
         while True:
             # Generate a random demand quantity
             I[0]["DEMAND_QUANTITY"] = DEMAND_QTY_FUNC(scenario)
-            demand_qty = I[0]["DEMAND_QUANTITY"]
             # Receive demands and initiate delivery process
-            sales.receive_demands(demand_qty, product_inventory, daily_events)
+            sales.receive_demands(
+                I[0]["DEMAND_QUANTITY"], product_inventory, daily_events)
             # Wait for the next order cycle
             yield self.env.timeout(I[0]["CUST_ORDER_CYCLE"] * 24)
 
@@ -394,6 +377,19 @@ class Cost:
             DAILY_COST[key] = 0
 
 
+def record_inventory(env, inventoryList):
+    """
+    Record inventory at every hour
+    """
+    record_graph(I)
+    while (True):
+        for inven in inventoryList:
+            GRAPH_LOG[I[inven.item_id]['NAME']].append(inven.on_hand_inventory)
+            if I[inven.item_id]['TYPE'] == 'Material':
+                GRAPH_LOG[f'{I[inven.item_id]['NAME']}_in_transition_inventory'].append(inven.in_transition_inventory)
+        yield env.timeout(1)
+
+
 def create_env(I, P, daily_events):
     # Function to create the simulation environment and necessary objects
     simpy_env = simpy.Environment()  # Create a SimPy environment
@@ -432,13 +428,14 @@ def create_env(I, P, daily_events):
 
 # Event processes for SimPy simulation
 def simpy_event_processes(simpy_env, inventoryList, procurementList, productionList, sales, customer, supplierList, daily_events, I, scenario):
+    simpy_env.process(customer.order_product(
+        sales, inventoryList[I[0]["ID"]], daily_events, scenario["DEMAND"]))
     for production in productionList:
         simpy_env.process(production.process_items(daily_events))
     for i in range(len(supplierList)):
         simpy_env.process(procurementList[i].order_material(
             supplierList[i], inventoryList[supplierList[i].item_id], daily_events, scenario["LEADTIME"]))
-    simpy_env.process(customer.order_product(
-        sales, inventoryList[I[0]["ID"]], daily_events, scenario["DEMAND"]))
+    simpy_env.process(record_inventory(simpy_env, inventoryList))
 
 
 def update_daily_report(inventoryList):

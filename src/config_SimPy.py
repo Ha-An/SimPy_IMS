@@ -1,6 +1,7 @@
 import random  # For random number generation
 import os
 import numpy as np
+import shutil
 
 #### Items #####################################################################
 # ID: Index of the element in the dictionary
@@ -173,16 +174,10 @@ INTRANSIT = 1  # 0: False / 1: True
 # if this is not 0, the length of state space of demand quantity is not identical to INVEN_LEVEL_MAX
 INVEN_LEVEL_MIN = 0
 INVEN_LEVEL_MAX = 20  # Capacity limit of the inventory [units]
-# DEMAND_QTY_MIN = 14
-# DEMAND_QTY_MAX = 14
 
 # Simulation
 SIM_TIME = 14  # 200 [days] per episode
-'''
-# Distribution types
-DEMAND_DIST_TYPE = "UNIFORM"  # GAUSSIAN, UNIFORM
-LEAD_DIST_TYPE = "UNIFORM"  # GAUSSIAN, UNIFORM
-'''
+
 # Count for intransit inventory
 MAT_COUNT = 0
 for id in I.keys():
@@ -219,25 +214,12 @@ def DEFINE_FOLDER(folder_name):
 
 
 def save_path(path):
-    import shutil
-
     if os.path.exists(path):
         shutil.rmtree(path)
 
     # Create a new folder
     os.makedirs(path)
     return path
-
-
-# Uncertainty factors
-
-'''
-def DEMAND_QTY_FUNC():
-    return random.randint(DEMAND_QTY_MIN, DEMAND_QTY_MAX)
-def SUP_LEAD_TIME_FUNC():
-    # SUP_LEAD_TIME must be an integer and less than CUST_ORDER_CYCLE(7)
-    return random.randint(1, 1)
-'''
 
 
 def DEMAND_QTY_FUNC(scenario):
@@ -279,17 +261,12 @@ def SUP_LEAD_TIME_FUNC(lead_time_dict):
 ORDER_QTY = 2
 REORDER_LEVEL = 0
 '''
-# Ordering rules -> If not used, the list should be left empty: []
-SSPOLICY = True  # When using Sspolicy
+DRL = True  # When using Sspolicy
 SQPAIR = {'Reorder': 0,
-          'Order': 0}
-# ORDER_QTY = [1] # AP1 when normal
-# ORDER_QTY = [1, 1, 1, 1, 1]  # AP3 when normal
-# ORDER_QTY = 2 # S_Level when SsPolicy
+          'Order': 2}
 
 # Print logs
 PRINT_SIM_EVENTS = True
-PRINT_SIM_REPORT = False
 PRINT_DAILY_COST = False
 
 # Cost model

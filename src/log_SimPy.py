@@ -16,3 +16,5 @@ DAILY_COST = {
     'Order cost': 0,
     'Shortage cost': 0
 }
+
+GRAPH_LOG = {}
