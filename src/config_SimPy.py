@@ -187,11 +187,11 @@ for id in I.keys():
 # Scenario about Demand and leadtime
 DEMAND_SCENARIO = {"Dist_Type": "UNIFORM",
                    "min": 10,
-                   "max": 11}
+                   "max": 10}
 
 LEADTIME_SCENARIO = {"Dist_Type": "UNIFORM",
                      "min": 1,
-                     "max": 2}
+                     "max": 1}
 # Example of Gaussian case
 """
 DEMAND_SCENARIO = {"Dist_Type": "GAUSSIAN",
@@ -262,7 +262,8 @@ ORDER_QTY = 2
 REORDER_LEVEL = 0
 '''
 DRL = True  # When using Sspolicy
-SQPAIR = {'Reorder': 0,
+PRINT_GRAPH_RECORD = False
+SQPAIR = {'Reorder': 2,
           'Order': 2}
 
 # Print logs

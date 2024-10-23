@@ -125,7 +125,6 @@ class Procurement:
         """
         Place orders for materials to the supplier.
         """
-        yield self.env.timeout(self.env.now)  # Wait for the next order cycle
         while True:
             daily_events.append(
                 f"==============={I[self.item_id]['NAME']}\'s Inventory ===============")
@@ -312,8 +311,6 @@ class Customer:
         """
         Place orders for products to the sales process.
         """
-        # yield self.env.timeout(self.env.now)  # Wait for the next order cycle
-        yield self.env.timeout(0)  # Wait for the next order cycle
         while True:
             # Generate a random demand quantity
             I[0]["DEMAND_QUANTITY"] = DEMAND_QTY_FUNC(scenario)
