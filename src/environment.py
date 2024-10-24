@@ -130,7 +130,7 @@ class Procurement:
                 f"==============={I[self.item_id]['NAME']}\'s Inventory ===============")
 
             # Set the order size based on LOT_SIZE_ORDER and reorder level
-            if DRL:
+            if DRL != True:
                 if inventory.on_hand_inventory <= SQPAIR['Reorder']:
                     order_size = SQPAIR['Order']
                 else:
