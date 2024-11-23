@@ -176,7 +176,7 @@ INVEN_LEVEL_MIN = 0
 INVEN_LEVEL_MAX = 20  # Capacity limit of the inventory [units]
 
 # Simulation
-SIM_TIME = 14  # 200 [days] per episode
+SIM_TIME = 200  # 200 [days] per episode
 
 # Count for intransit inventory
 MAT_COUNT = 0
@@ -187,11 +187,11 @@ for id in I.keys():
 # Scenario about Demand and leadtime
 DEMAND_SCENARIO = {"Dist_Type": "UNIFORM",
                    "min": 10,
-                   "max": 11}
+                   "max": 10}
 
 LEADTIME_SCENARIO = {"Dist_Type": "UNIFORM",
                      "min": 1,
-                     "max": 2}
+                     "max": 1}
 # Example of Gaussian case
 """
 DEMAND_SCENARIO = {"Dist_Type": "GAUSSIAN",
@@ -256,14 +256,13 @@ def SUP_LEAD_TIME_FUNC(lead_time_dict):
         return int(round(lead_time))
 
 
-'''
-# Ordering rules
-ORDER_QTY = 2
-REORDER_LEVEL = 0
-'''
-DRL = True  # When using Sspolicy
-SQPAIR = {'Reorder': 0,
-          'Order': 2}
+PRINT_GRAPH_RECORD = True
+# Ordering rules : Reorder point (S) and Order quantity (Q)
+# USE_SQPOLICY = True  : When using SQpolicy (DRL is NOT used)
+# USE_SQPOLICY = False  : When NOT using SQpolicy (DRL is used)
+USE_SQPOLICY = True
+SQPAIR = {'Reorder': 5,
+          'Order': 4}
 
 # Print logs
 PRINT_SIM_EVENTS = True

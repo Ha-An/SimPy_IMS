@@ -42,4 +42,5 @@ for x in range(SIM_TIME):
     print(f"Cumulative Total Cost: {sum(LOG_COST)}")
     env.Cost.clear_cost()
 
-viz_sq()
+if PRINT_GRAPH_RECORD:
+    viz_sq()
