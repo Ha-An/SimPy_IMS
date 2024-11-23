@@ -8,21 +8,21 @@ SimPy-based Inventory Management Simulation
   * The Inventory department is a department that manages inventory. It supplies materials to the Production department, stores products, and delivers current raw material inventory information to the Procurement department.
   * The Procurement department is responsible for looking at the inventory information provided by the Inventory department and placing orders when the inventory falls below the set level.
   * The Production department takes materials from the Inventory department and produces WIP and products.
-
+<!-- 
 # How to run Simulator
 * Python 3.11
 * Needed Package
   * Numpy
   * Simpy
-  * matplotlib
+  * matplotlib -->
 
 #  How to set parameters
 Every parmeters in config_SimPy.py
-* SIM_TIME: Set the period to simulate
+* SIM_TIME: Set the period to simulate (days per episode)
 * DEMAND_SCENARIO: Set distribution for customers to order
 * LEADTIME_SCENARIO: Set the leadtime distribution
-* DRL: Must be set to False when running the simulator
-* SQPAIR: Set when and how many raw materials to order
+* USE_SQPOLICY: Must be set to True when running the simulator. When using SQpolicy (DRL is NOT used)
+* SQPAIR: Set when and how many raw materials to order. (Ordering rules : Reorder point (S) and Order quantity (Q))
 
 # Version
 * Version 1.0
