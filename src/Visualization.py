@@ -6,6 +6,7 @@ from config_SimPy import *
 def viz_sq():
     for graph in GRAPH_LOG.keys():
         plt.plot(GRAPH_LOG[graph], label=f'{graph}')
+    plt.xlabel('hours')
     plt.legend()
     plt.show()
 
