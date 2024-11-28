@@ -444,9 +444,6 @@ def update_daily_report(inventoryList):
         day_list = day_list+(inven.daily_inven_report)
 
         day_dict[f"On_Hand_{I[inven.item_id]['NAME']}"] = inven.on_hand_inventory
-        # daily_inven_report[4]: Income, inven.daily_inven_report[5]: Outgoing
-        day_dict[f"Daily_Change_{I[inven.item_id]['NAME']}"] = inven.daily_inven_report[4] - \
-            inven.daily_inven_report[5]
         if INTRANSIT == 1:
             if I[inven.item_id]["TYPE"] == "Material":
                 # inven.daily_inven_report[6]: In_Transit
