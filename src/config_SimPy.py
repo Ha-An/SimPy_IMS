@@ -165,19 +165,15 @@ P = {0: {"ID": 0, "PRODUCTION_RATE": 2, "INPUT_TYPE_LIST": [I[1], I[2]], "QNTY_F
          "OUTPUT": I[0], "PROCESS_COST": 1, "PROCESS_STOP_COST": 2}}
 '''
 
-# Options for RL states
-INTRANSIT = 1  # 0: False / 1: True
-
-
 # State space
 # if this is not 0, the length of state space of demand quantity is not identical to INVEN_LEVEL_MAX
 INVEN_LEVEL_MIN = 0
 INVEN_LEVEL_MAX = 20  # Capacity limit of the inventory [units]
 
 # Simulation
-SIM_TIME = 200  # 200 [days] per episode
+SIM_TIME = 10  # 200 [days] per episode
 
-# Count for intransit inventory
+# Count for material inventory
 MAT_COUNT = 0
 for id in I.keys():
     if I[id]["TYPE"] == "Material":
@@ -185,8 +181,8 @@ for id in I.keys():
 
 # Scenario about Demand and leadtime
 DEMAND_SCENARIO = {"Dist_Type": "UNIFORM",
-                   "min": 10,
-                   "max": 10}
+                   "min": 14,
+                   "max": 14}
 
 LEADTIME_SCENARIO = {"Dist_Type": "UNIFORM",
                      "min": 1,
@@ -256,17 +252,23 @@ def SUP_LEAD_TIME_FUNC(lead_time_dict):
         return int(round(lead_time))
 
 
-PRINT_GRAPH_RECORD = True
 # Ordering rules : Reorder point (S) and Order quantity (Q)
 # USE_SQPOLICY = True  : When using SQpolicy (DRL is NOT used)
 # USE_SQPOLICY = False  : When NOT using SQpolicy (DRL is used)
 USE_SQPOLICY = True
-SQPAIR = {'Reorder': 5,
-          'Order': 4}
+# SQPAIR = {'Reorder': 5,
+#           'Order': 4}
+SQPAIR = {'Reorder': 2,
+          'Order': 1}
+
+# Log simulation events
+LOG_DAILY_EVENTS = True
 
 # Print logs
-PRINT_SIM_EVENTS = True
-PRINT_DAILY_COST = False
+PRINT_GRAPH_RECORD = True
+PRINT_DAILY_EVENTS = True
+PRINT_DAILY_COST = True
+PRINT_LOG_REPORTS = True
 
 # Cost model
 # If False, the total cost is calculated based on the inventory level for every 24 hours.
